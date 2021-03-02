@@ -5,6 +5,8 @@ Param([switch] $WhatIf)
 
 $GC_LogDir = "C:\Logs"
 $GC_LogNmame = "MoveYYYYMM"
+
+# これより古いファイルは処理しない
 [datetime]$GC_MinDate = "1990/1/1"
 
 $GC_CurrentDir = (Get-Location).Path
@@ -64,23 +66,31 @@ $LogString = "Current Directory : $GC_CurrentDir"
 Log $LogString
 
 
-[array]$TergetFiles = Get-ChildItem -Path $GC_CurrentDir | ? Attributes -ne [FileAttributes]"Directory"
+[array]$TergetFiles = Get-ChildItem -Path $GC_CurrentDir
 
-$LogString = "Terget Files : $TergetFiles.Count"
+$LogString = "Terget Files : " + $TergetFiles.Count
 Log $LogString
 
 foreach($TergetFile in $TergetFiles){
+	[UInt16]$DirecotyBit = $TergetFile.Attributes -band [System.IO.FileAttributes]::Directory
+	# ディレクトリ
+	if( $DirecotyBit -ne 0){
+		$LogString = "[WARNING]This is Directory : " + $TergetFile.FullName
+		Log $LogString
+		continue
+	}
+
 	Try{
 		[datetime]$FileDateTime = $TergetFile.LastWriteTime
 	}
 	Catch{
-		$LogString = "[Error]File Date is Error : $TergetFiles.FullName"
+		$LogString = "[ERROR]File Date is Error : $TergetFiles.FullName"
 		Log $LogString
 		continue
 	}
 
 	if( $FileDateTime -lt $GC_MinDate ){
-		$LogString = "[Error]File Date so small : $FileDateTime.ToString()"
+		$LogString = "[ERROR]File Date so small : $FileDateTime.ToString()"
 		Log $LogString
 		continue
 	}
@@ -104,13 +114,13 @@ foreach($TergetFile in $TergetFiles){
 	}
 
 	$MoveTergetFullPath = Join-Path $TergetYYYYMMDir $TergetFile.Name
-	if(Test-Path $TergetFile.Name ){
-		$LogString = "Terget file is exist : $MoveTergetFullPath"
+	if( Test-Path $MoveTergetFullPath ){
+		$LogString = "[ERROR]Terget file is exist : $MoveTergetFullPath"
 		Log $LogString
 		continue
 	}
 
-	$LogString = "File move : $TergetFile.FullName -> $TergetYYYYMMDir"
+	$LogString = "File move : " + $TergetFile.FullName + " -> $TergetYYYYMMDir"
 	Log $LogString
 
 	if(-not $WhatIf){
@@ -119,3 +129,4 @@ foreach($TergetFile in $TergetFiles){
 }
 
 $LogString = "========= END ========="
+Log $LogString
