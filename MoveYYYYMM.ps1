@@ -72,9 +72,8 @@ $LogString = "Terget Files : " + $TergetFiles.Count
 Log $LogString
 
 foreach($TergetFile in $TergetFiles){
-	[UInt16]$DirecotyBit = $TergetFile.Attributes -band [System.IO.FileAttributes]::Directory
 	# ディレクトリ
-	if( $DirecotyBit -ne 0){
+	if( ($TergetFile.Attributes -band [System.IO.FileAttributes]::Directory) -eq [System.IO.FileAttributes]::Directory){
 		$LogString = "[WARNING]This is Directory : " + $TergetFile.FullName
 		Log $LogString
 		continue
